@@ -149,20 +149,37 @@ fn mismatch_error(result: &ConsistencyResult, token: &str) -> String {
 /// since generation stopped inventing one, and refusing to start those profiles
 /// would break profiles that are legitimately in that state. It is not a pass
 /// either, so the launch says what it could not check.
+fn reportable_unverified(profile: &BrowserProfile, dimensions: &[String]) -> Vec<String> {
+  let timezone_pending = profile
+    .wayfern_config
+    .as_ref()
+    .is_some_and(crate::wayfern_manager::WayfernManager::needs_automatic_timezone);
+  dimensions
+    .iter()
+    // The normal launcher still has to resolve this clock or fail. Calling it
+    // unverified now leaves an obsolete toast after a successful resolution.
+    .filter(|dimension| !timezone_pending || dimension.as_str() != "timezone")
+    .cloned()
+    .collect()
+}
+
 fn report_consistency(profile: &BrowserProfile, result: &ConsistencyResult) {
   if result.is_verified() {
     log::debug!("Fingerprint gate passed profile={}", profile.id);
     return;
   }
-  if result.unverified.is_empty() {
+  let unverified = reportable_unverified(profile, &result.unverified);
+  if unverified.is_empty() {
     return;
   }
   log::info!(
     "Fingerprint gate could not verify, fingerprint declares no value profile={} unverified={}",
     profile.id,
-    result.unverified.join(",")
+    unverified.join(",")
   );
-  if let Err(e) = crate::events::emit("fingerprint-consistency-unverified", result) {
+  let mut report = result.clone();
+  report.unverified = unverified;
+  if let Err(e) = crate::events::emit("fingerprint-consistency-unverified", &report) {
     log::warn!("Event emit failed event=fingerprint-consistency-unverified err=\"{e}\"");
   }
 }
@@ -444,7 +461,10 @@ pub async fn get_profile_pre_launch_checks(profile_id: String) -> Result<PreLaun
   // measures an exit, so there is nothing it failed to verify.
   let gate_will_measure = !disabled && !already_acked && key.is_some();
   let exit_unverified = if gate_will_measure {
-    fingerprint_consistency::unverifiable_dimensions(&profile)
+    reportable_unverified(
+      &profile,
+      &fingerprint_consistency::unverifiable_dimensions(&profile),
+    )
   } else {
     Vec::new()
   };
@@ -530,6 +550,63 @@ mod tests {
       ..Default::default()
     });
     profile
+  }
+
+  #[test]
+  fn pending_auto_delays_only_the_clock_warning_without_verifying_it() {
+    let mut profile = profile_with(r#"{"platform":"MacIntel"}"#);
+    profile
+      .wayfern_config
+      .as_mut()
+      .unwrap()
+      .timezone_auto_pending = true;
+    let dimensions = fingerprint_consistency::unverifiable_dimensions(&profile);
+    assert_eq!(dimensions, vec!["timezone", "language"]);
+    assert_eq!(
+      reportable_unverified(&profile, &dimensions),
+      vec!["language"]
+    );
+    let result = fingerprint_consistency::compare_exit_to_fingerprint(
+      &profile,
+      Some("America/Chicago".into()),
+      Some("US".into()),
+      None,
+    );
+    assert_eq!(result.unverified, dimensions);
+    assert!(!result.is_verified());
+    assert!(!result.is_mismatch());
+  }
+
+  #[test]
+  fn pending_auto_filter_keeps_old_unknown_clock_warnings() {
+    let profile = profile_with(r#"{"language":"en-US"}"#);
+    let dimensions = fingerprint_consistency::unverifiable_dimensions(&profile);
+    assert_eq!(
+      reportable_unverified(&profile, &dimensions),
+      vec!["timezone"]
+    );
+  }
+
+  #[test]
+  fn pending_auto_filter_does_not_hide_a_manual_clock_mismatch() {
+    let mut profile = profile_with(r#"{"language":"en-US"}"#);
+    let config = profile.wayfern_config.as_mut().unwrap();
+    config.timezone_override = Some("America/Los_Angeles".into());
+    config.timezone_auto_pending = true;
+    // A manual choice takes precedence even if an imported pending flag is stale.
+    assert_eq!(
+      reportable_unverified(&profile, &["timezone".into()]),
+      vec!["timezone"]
+    );
+    let result = fingerprint_consistency::compare_exit_to_fingerprint(
+      &profile,
+      Some("America/Chicago".into()),
+      Some("US".into()),
+      None,
+    );
+    assert!(result.is_mismatch());
+    assert!(!result.is_verified());
+    assert_eq!(result.mismatches, vec!["timezone"]);
   }
 
   #[test]
