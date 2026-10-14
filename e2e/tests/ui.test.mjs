@@ -142,6 +142,22 @@ test("manual timezone selection saves without a paid fingerprint editor", async 
         en.fingerprint.timezoneModeManual,
       );
       await app.clickSelector('[id$="-timezone-zone"][role="combobox"]');
+      const timezoneList = await app.execute(`
+        const list = document.querySelector('[data-slot="popover-content"] [cmdk-list]');
+        const rect = list.getBoundingClientRect();
+        const wheel = new WheelEvent('wheel', {
+          bubbles: true, cancelable: true, deltaY: 160,
+        });
+        list.querySelector('[cmdk-item]').dispatchEvent(wheel);
+        return {
+          scrollable: list.scrollHeight > list.clientHeight,
+          wheelBlocked: wheel.defaultPrevented,
+          insideWindow: rect.top >= 0 && rect.bottom <= innerHeight,
+        };
+      `);
+      assert.equal(timezoneList.scrollable, true);
+      assert.equal(timezoneList.wheelBlocked, false);
+      assert.equal(timezoneList.insideWindow, true);
       await app.fillSelector("[cmdk-input]", "Los_Angeles");
       await app.clickText("America/Los_Angeles", { roles: ["option"] });
       assert.equal(

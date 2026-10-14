@@ -104,14 +104,13 @@ export function TimezoneSelector({
           <Label htmlFor={`${id}-timezone-zone`}>
             {t("fingerprint.timezoneIana")}
           </Label>
-          <Popover open={open} onOpenChange={setOpen}>
+          <Popover open={open} onOpenChange={setOpen} modal>
             <PopoverTrigger asChild>
               <Button
                 id={`${id}-timezone-zone`}
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
-                aria-controls={`${id}-timezone-zones`}
                 className="w-full justify-between font-normal"
                 disabled={readOnly}
               >
@@ -119,10 +118,10 @@ export function TimezoneSelector({
                 <LuChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="start">
-              <Command>
+            <PopoverContent className="w-80 overflow-hidden p-0" align="start">
+              <Command className="h-auto">
                 <CommandInput placeholder={t("fingerprint.timezoneSearch")} />
-                <CommandList id={`${id}-timezone-zones`}>
+                <CommandList className="max-h-[min(20rem,calc(var(--radix-popover-content-available-height)-2.5rem))] overscroll-contain">
                   <CommandEmpty>
                     {t("fingerprint.timezoneNoResults")}
                   </CommandEmpty>
