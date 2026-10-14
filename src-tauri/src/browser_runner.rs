@@ -347,6 +347,12 @@ impl BrowserRunner {
         log::debug!("No wayfern config, using default profile={}", profile.id);
         WayfernConfig::default()
       });
+      crate::wayfern_manager::WayfernManager::apply_config_timezone_override(&mut wayfern_config)?;
+      // The gate must compare the clock this launch will really present,
+      // including a manual selection received through import or sync.
+      let mut prepared_profile = profile.clone();
+      prepared_profile.wayfern_config = Some(wayfern_config.clone());
+      let profile = &prepared_profile;
 
       emit_launch_stage(profile, "network", None);
       // Always start a local proxy for Wayfern (for traffic monitoring and geoip support)
@@ -594,6 +600,9 @@ impl BrowserRunner {
           })?;
 
         let geolocation_applied = generated.geolocation_applied;
+        if geolocation_applied {
+          wayfern_config.timezone_auto_pending = false;
+        }
 
         // Update the config with the new device for launching. An identity
         // stores the id and the location only; a legacy browser stores the
@@ -610,6 +619,7 @@ impl BrowserRunner {
 
         // Save the updated device to the profile so it persists.
         let mut updated_wayfern_config = updated_profile.wayfern_config.clone().unwrap_or_default();
+        updated_wayfern_config.timezone_auto_pending = wayfern_config.timezone_auto_pending;
         updated_wayfern_config.identity_id = generated.identity_id;
         updated_wayfern_config.location = generated.location;
         updated_wayfern_config.identity_baseline = None;
@@ -639,6 +649,24 @@ impl BrowserRunner {
           None
         };
         updated_profile.wayfern_config = Some(updated_wayfern_config);
+      }
+      if crate::wayfern_manager::WayfernManager::needs_automatic_timezone(&wayfern_config) {
+        // A Manual -> Auto edit removed the old clock. Resolve through the
+        // official launch route, after its proxy/VPN is ready, rather than
+        // probing the host or keeping the stale manual value on failure.
+        let timezone_proxy = wayfern_config.proxy.clone();
+        crate::wayfern_manager::WayfernManager::resolve_automatic_timezone(
+          &mut wayfern_config,
+          timezone_proxy.as_deref(),
+        )
+        .await?;
+        wayfern_config.geo_proxy_signature =
+          Some(crate::wayfern_manager::WayfernManager::geo_signature(
+            geo_proxy_signature_settings.as_ref(),
+            profile.vpn_id.as_deref(),
+            wayfern_config.geoip.as_ref(),
+          ));
+        updated_profile.wayfern_config = Some(wayfern_config.clone());
       }
       // A non-randomize profile keeps its configured fingerprint verbatim, even
       // when its proxy/VPN routing has changed since the fingerprint was built.

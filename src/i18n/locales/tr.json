@@ -1387,7 +1387,13 @@
     "enterAsJson": "{{title}} değerini JSON olarak girin",
     "launchArgs": "Başlatma argümanları",
     "launchArgsDescription": "Her satıra bir argüman girin: --name veya --name=value. Yalnızca desteklenen argümanlar kabul edilir; örneğin --disable-gpu, --mute-audio veya --disable-features=Name. Profil, proxy, pencere ve hata ayıklama argümanlarını Donut yönetir.",
-    "launchArgsSkipped": "{{profile}} için özel başlatma argümanları kullanılmadı. {{reason}}"
+    "launchArgsSkipped": "{{profile}} için özel başlatma argümanları kullanılmadı. {{reason}}",
+    "timezoneModeLabel": "Saat dilimi seçimi",
+    "timezoneModeAuto": "Konum ayarlarını izle",
+    "timezoneModeManual": "Elle seç",
+    "timezoneSearch": "Saat dilimi ara…",
+    "timezoneNoResults": "Eşleşen saat dilimi yok.",
+    "timezoneChoiceDescription": "Elle seçim yalnızca bu profilin saat dilimini değiştirir. Yaz saati otomatik hesaplanır. Dil ve konum mevcut ayarlarını korur. Değişiklikler sonraki başlatmada uygulanır."
   },
   "warnings": {
     "windowResizeTitle": "Özel Pencere Boyutları",
@@ -2426,7 +2432,8 @@
     "feedbackInvalid": "Geri bildirim kabul edilmedi. Mesajı kontrol edip tekrar deneyin.",
     "feedbackRateLimited": "Kısa sürede çok fazla geri bildirim gönderdiniz. Birkaç dakika sonra tekrar deneyin.",
     "feedbackSendFailed": "Geri bildirim gönderilemedi. Daha sonra tekrar deneyin.",
-    "feedbackLogsUnreadable": "Günlükler okunamadı. \"Son günlükleri ekle\" seçeneğini kapatıp tekrar gönderin."
+    "feedbackLogsUnreadable": "Günlükler okunamadı. \"Son günlükleri ekle\" seçeneğini kapatıp tekrar gönderin.",
+    "timezoneOverrideInvalid": "{{timezone}} desteklenen bir IANA saat dilimi değil."
   },
   "rail": {
     "profiles": "Profiller",

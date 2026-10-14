@@ -114,6 +114,62 @@ async function submitProfileCreation(app, name) {
   );
 }
 
+test("manual timezone selection saves without a paid fingerprint editor", async () => {
+  await withApp(
+    "ui-manual-timezone",
+    async (app) => {
+      await stubCommand(app, "is_geoip_database_available", true);
+      await app.execute(`
+      const originalFetch = window.fetch;
+      window.fetch = function(input, init) {
+        const url = typeof input === 'string' ? input : input?.url ?? '';
+        if (url.endsWith('/create_browser_profile_new')) {
+          const payload = JSON.parse(init.body);
+          payload.wayfernConfig = { ...payload.wayfernConfig, fingerprint: '{}' };
+          return originalFetch.call(window, input, { ...init, body: JSON.stringify(payload) });
+        }
+        return originalFetch.apply(window, arguments);
+      };
+    `);
+      await openProfileCreation(app);
+      await app.fillSelector("#profile-name", "Manual timezone");
+      await app.clickText(en.createProfile.advancedOptions, {
+        roles: ["button"],
+      });
+      await chooseSelectOption(
+        app,
+        '[id$="-timezone-mode"][role="combobox"]',
+        en.fingerprint.timezoneModeManual,
+      );
+      await app.clickSelector('[id$="-timezone-zone"][role="combobox"]');
+      await app.fillSelector("[cmdk-input]", "Los_Angeles");
+      await app.clickText("America/Los_Angeles", { roles: ["option"] });
+      assert.equal(
+        await app.execute(
+          `return document.querySelector('[id$="-timezone-zone"]').textContent.trim();`,
+        ),
+        "America/Los_Angeles",
+      );
+      assert.equal(
+        await app.execute(
+          `return document.querySelector('#user-agent').disabled || document.querySelector('#user-agent').closest('fieldset').disabled;`,
+        ),
+        true,
+      );
+      const profile = await submitProfileCreation(app, "Manual timezone");
+      assert.equal(
+        profile.wayfern_config.timezone_override,
+        "America/Los_Angeles",
+      );
+      assert.equal(
+        JSON.parse(profile.wayfern_config.fingerprint).timezone,
+        "America/Los_Angeles",
+      );
+    },
+    { seedDownloadedBrowser: true },
+  );
+});
+
 test("profile creation stays compact and saves basic, protected, and ephemeral profiles", async () => {
   await withApp(
     "ui-profile-creation",

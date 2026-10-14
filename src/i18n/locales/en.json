@@ -1387,7 +1387,13 @@
     "enterAsJson": "Enter {{title}} as JSON",
     "launchArgs": "Launch arguments",
     "launchArgsDescription": "Enter one argument per line, as --name or --name=value. Only supported arguments are accepted, for example --disable-gpu, --mute-audio or --disable-features=Name. Donut controls the profile, proxy, window and debugging arguments.",
-    "launchArgsSkipped": "Custom launch arguments were not used for {{profile}}. {{reason}}"
+    "launchArgsSkipped": "Custom launch arguments were not used for {{profile}}. {{reason}}",
+    "timezoneModeLabel": "Timezone selection",
+    "timezoneModeAuto": "Follow location settings",
+    "timezoneModeManual": "Choose manually",
+    "timezoneSearch": "Search timezones…",
+    "timezoneNoResults": "No matching timezone.",
+    "timezoneChoiceDescription": "Manual selection changes only this profile’s timezone. Daylight saving time is calculated automatically. Language and location keep their existing settings. Changes apply on the next launch."
   },
   "warnings": {
     "windowResizeTitle": "Custom Window Dimensions",
@@ -2426,7 +2432,8 @@
     "feedbackInvalid": "The feedback was not accepted. Check the message and try again.",
     "feedbackRateLimited": "You sent a lot of feedback in a short time. Try again in a few minutes.",
     "feedbackSendFailed": "The feedback could not be sent. Try again later.",
-    "feedbackLogsUnreadable": "The logs could not be read. Turn off \"Include recent logs\" and send again."
+    "feedbackLogsUnreadable": "The logs could not be read. Turn off \"Include recent logs\" and send again.",
+    "timezoneOverrideInvalid": "{{timezone}} is not a supported IANA timezone."
   },
   "rail": {
     "profiles": "Profiles",

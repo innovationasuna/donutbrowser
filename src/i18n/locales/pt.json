@@ -1393,7 +1393,13 @@
     "enterAsJson": "Insira {{title}} como JSON",
     "launchArgs": "Argumentos de inicialização",
     "launchArgsDescription": "Insira um argumento por linha, como --name ou --name=value. Apenas argumentos compatíveis são aceitos, por exemplo --disable-gpu, --mute-audio ou --disable-features=Name. O Donut controla os argumentos de perfil, proxy, janela e depuração.",
-    "launchArgsSkipped": "Os argumentos de inicialização personalizados não foram usados em {{profile}}. {{reason}}"
+    "launchArgsSkipped": "Os argumentos de inicialização personalizados não foram usados em {{profile}}. {{reason}}",
+    "timezoneModeLabel": "Seleção de fuso horário",
+    "timezoneModeAuto": "Seguir definições de localização",
+    "timezoneModeManual": "Escolher manualmente",
+    "timezoneSearch": "Pesquisar fusos horários…",
+    "timezoneNoResults": "Nenhum fuso horário correspondente.",
+    "timezoneChoiceDescription": "A seleção manual altera apenas o fuso horário deste perfil. O horário de verão é calculado automaticamente. O idioma e a localização mantêm as definições existentes. As alterações entram em vigor na próxima abertura."
   },
   "warnings": {
     "windowResizeTitle": "Dimensões de janela personalizadas",
@@ -2436,7 +2442,8 @@
     "feedbackInvalid": "O feedback não foi aceito. Verifique a mensagem e tente novamente.",
     "feedbackRateLimited": "Você enviou muito feedback em pouco tempo. Tente novamente em alguns minutos.",
     "feedbackSendFailed": "Não foi possível enviar o feedback. Tente novamente mais tarde.",
-    "feedbackLogsUnreadable": "Não foi possível ler os logs. Desative \"Incluir logs recentes\" e envie novamente."
+    "feedbackLogsUnreadable": "Não foi possível ler os logs. Desative \"Incluir logs recentes\" e envie novamente.",
+    "timezoneOverrideInvalid": "{{timezone}} não é um fuso horário IANA compatível."
   },
   "rail": {
     "profiles": "Perfis",

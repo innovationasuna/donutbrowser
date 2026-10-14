@@ -1387,7 +1387,13 @@
     "enterAsJson": "{{title}} を JSON で入力",
     "launchArgs": "起動引数",
     "launchArgsDescription": "1 行に 1 つの引数を --name または --name=value の形式で入力します。使用できるのは対応している引数だけです（例: --disable-gpu、--mute-audio、--disable-features=Name）。プロファイル、プロキシ、ウィンドウ、デバッグの引数は Donut が管理します。",
-    "launchArgsSkipped": "{{profile}} ではカスタム起動引数が使われませんでした。{{reason}}"
+    "launchArgsSkipped": "{{profile}} ではカスタム起動引数が使われませんでした。{{reason}}",
+    "timezoneModeLabel": "タイムゾーンの選択",
+    "timezoneModeAuto": "位置情報の設定に従う",
+    "timezoneModeManual": "手動で指定",
+    "timezoneSearch": "タイムゾーンを検索…",
+    "timezoneNoResults": "一致するタイムゾーンがありません。",
+    "timezoneChoiceDescription": "手動選択はこのプロファイルのタイムゾーンのみを変更します。夏時間は自動計算されます。言語と位置情報は現在の設定を維持し、変更は次回起動時に適用されます。"
   },
   "warnings": {
     "windowResizeTitle": "カスタムウィンドウサイズ",
@@ -2426,7 +2432,8 @@
     "feedbackInvalid": "フィードバックを受け付けられませんでした。メッセージを確認して、もう一度お試しください。",
     "feedbackRateLimited": "短時間に多くのフィードバックが送信されました。数分後にもう一度お試しください。",
     "feedbackSendFailed": "フィードバックを送信できませんでした。しばらくしてからもう一度お試しください。",
-    "feedbackLogsUnreadable": "ログを読み込めませんでした。「最近のログを添付」をオフにして、もう一度送信してください。"
+    "feedbackLogsUnreadable": "ログを読み込めませんでした。「最近のログを添付」をオフにして、もう一度送信してください。",
+    "timezoneOverrideInvalid": "{{timezone}} は対応している IANA タイムゾーンではありません。"
   },
   "rail": {
     "profiles": "プロファイル",

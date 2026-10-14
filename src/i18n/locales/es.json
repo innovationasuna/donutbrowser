@@ -1393,7 +1393,13 @@
     "enterAsJson": "Ingresa {{title}} como JSON",
     "launchArgs": "Argumentos de inicio",
     "launchArgsDescription": "Introduce un argumento por línea, como --name o --name=value. Solo se aceptan argumentos compatibles, por ejemplo --disable-gpu, --mute-audio o --disable-features=Name. Donut controla los argumentos de perfil, proxy, ventana y depuración.",
-    "launchArgsSkipped": "No se usaron los argumentos de inicio personalizados de {{profile}}. {{reason}}"
+    "launchArgsSkipped": "No se usaron los argumentos de inicio personalizados de {{profile}}. {{reason}}",
+    "timezoneModeLabel": "Selección de zona horaria",
+    "timezoneModeAuto": "Seguir ajustes de ubicación",
+    "timezoneModeManual": "Elegir manualmente",
+    "timezoneSearch": "Buscar zonas horarias…",
+    "timezoneNoResults": "No hay zonas horarias coincidentes.",
+    "timezoneChoiceDescription": "La selección manual solo cambia la zona horaria de este perfil. El horario de verano se calcula automáticamente. El idioma y la ubicación conservan sus ajustes. Los cambios se aplican en el próximo inicio."
   },
   "warnings": {
     "windowResizeTitle": "Dimensiones de ventana personalizadas",
@@ -2436,7 +2442,8 @@
     "feedbackInvalid": "Los comentarios no se aceptaron. Revisa el mensaje e inténtalo de nuevo.",
     "feedbackRateLimited": "Enviaste muchos comentarios en poco tiempo. Inténtalo de nuevo en unos minutos.",
     "feedbackSendFailed": "No se pudieron enviar los comentarios. Inténtalo más tarde.",
-    "feedbackLogsUnreadable": "No se pudieron leer los registros. Desactiva «Incluir registros recientes» y envía de nuevo."
+    "feedbackLogsUnreadable": "No se pudieron leer los registros. Desactiva «Incluir registros recientes» y envía de nuevo.",
+    "timezoneOverrideInvalid": "{{timezone}} no es una zona horaria IANA compatible."
   },
   "rail": {
     "profiles": "Perfiles",

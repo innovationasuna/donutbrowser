@@ -210,6 +210,7 @@ impl ProfileManager {
     let launch_hook = Self::normalize_launch_hook(launch_hook)?;
 
     if let Some(config) = wayfern_config.as_mut() {
+      config.normalize_timezone_override()?;
       config.launch_args = config.checked_launch_args().await?;
     }
 
@@ -390,6 +391,9 @@ impl ProfileManager {
               Some(generated.fingerprint)
             };
             geolocation_applied = generated.geolocation_applied;
+            if geolocation_applied {
+              config.timezone_auto_pending = false;
+            }
             fingerprint_source = "generated";
           }
           Err(e) => {
@@ -423,6 +427,8 @@ impl ProfileManager {
           config.location = Some(location);
         }
       }
+
+      crate::wayfern_manager::WayfernManager::apply_config_timezone_override(&mut config)?;
 
       // Record which proxy/geoip the fingerprint's location data was computed
       // for. On launch this is compared against the profile's current routing
@@ -1576,6 +1582,7 @@ impl ProfileManager {
     profile_id: &str,
     mut config: WayfernConfig,
   ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    config.normalize_timezone_override()?;
     config.launch_args = config.checked_launch_args().await?;
     // Find the profile by ID
     let profile_uuid = uuid::Uuid::parse_str(profile_id).map_err(
@@ -1605,7 +1612,7 @@ impl ProfileManager {
       return Err(crate::backend_error("PROFILE_RUNNING").into());
     }
 
-    let config = merge_submitted_wayfern_config(profile.wayfern_config.as_ref(), config);
+    let mut config = merge_submitted_wayfern_config(profile.wayfern_config.as_ref(), config);
 
     let stored = profile.wayfern_config.as_ref();
     let fingerprint_changed = config.fingerprint.is_some()
@@ -1623,6 +1630,10 @@ impl ProfileManager {
     {
       return Err(crate::backend_error("FINGERPRINT_REQUIRES_PRO").into());
     }
+
+    // Authorize submitted hardware edits first. The independent clock setting
+    // then updates only the existing location channel, including legacy data.
+    crate::wayfern_manager::WayfernManager::prepare_timezone_edit(stored, &mut config)?;
 
     // Update the Wayfern configuration
     if profile
@@ -1644,6 +1655,8 @@ impl ProfileManager {
       })?;
 
     crate::sync::queue_profile_sync_if_eligible(&profile);
+
+    crate::fingerprint_consistency::invalidate_exit_cache(&profile);
 
     log::info!("Wayfern config updated profile={profile_id}");
 
@@ -2120,6 +2133,33 @@ mod tests {
       identity_baseline: Some(VIEW.to_string()),
       ..Default::default()
     }
+  }
+
+  #[test]
+  fn timezone_auto_null_is_not_replaced_by_the_stored_manual_selection() {
+    let stored = WayfernConfig {
+      identity_id: Some("id-1".into()),
+      timezone_override: Some("Asia/Tokyo".into()),
+      location: Some(r#"{"timezone":"Asia/Tokyo","language":"en-US"}"#.into()),
+      identity_overrides: Some(r#"{"hardwareConcurrency":8}"#.into()),
+      ..Default::default()
+    };
+    let submitted: WayfernConfig = serde_json::from_value(serde_json::json!({
+      "identity_id": "id-1", "timezone_override": null
+    }))
+    .unwrap();
+    let mut merged = merge_submitted_wayfern_config(Some(&stored), submitted);
+    crate::wayfern_manager::WayfernManager::prepare_timezone_edit(Some(&stored), &mut merged)
+      .unwrap();
+    assert!(merged.timezone_override.is_none());
+    assert_eq!(merged.identity_id, stored.identity_id);
+    assert_eq!(merged.identity_overrides, stored.identity_overrides);
+    assert!(
+      crate::wayfern_manager::WayfernManager::stored_object(merged.location.as_deref())
+        .get("timezone")
+        .is_none()
+    );
+    assert!(crate::wayfern_manager::WayfernManager::needs_automatic_timezone(&merged));
   }
 
   #[test]

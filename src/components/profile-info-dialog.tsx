@@ -44,6 +44,7 @@ import { ProfileLaunchActivity } from "@/components/profile-launch-activity";
 import { ProfileMetadataCard } from "@/components/profile-metadata-card";
 import { ExportProfileSection } from "@/components/profile-transfer";
 import { SharedFingerprintConfigForm } from "@/components/shared-fingerprint-config-form";
+import { TimezoneSelector } from "@/components/timezone-selector";
 import { AnimatedSwitch } from "@/components/ui/animated-switch";
 import { Button } from "@/components/ui/button";
 import {
@@ -2300,6 +2301,11 @@ function FingerprintSectionInline({
         />
       ) : (
         <>
+          <TimezoneSelector
+            config={wayfernConfig}
+            onConfigChange={onWayfernChange}
+            readOnly={isDisabled || isSaving}
+          />
           <div className="flex flex-col items-center gap-3 rounded-lg border p-6 text-center">
             <LuLock className="size-4 shrink-0 text-muted-foreground" />
             <h3 className="text-sm font-medium text-foreground">

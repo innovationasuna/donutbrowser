@@ -1387,7 +1387,13 @@
     "enterAsJson": "以 JSON 格式输入 {{title}}",
     "launchArgs": "启动参数",
     "launchArgsDescription": "每行输入一个参数，格式为 --name 或 --name=value。只接受受支持的参数，例如 --disable-gpu、--mute-audio 或 --disable-features=Name。配置文件、代理、窗口和调试参数由 Donut 管理。",
-    "launchArgsSkipped": "{{profile}} 未使用自定义启动参数。{{reason}}"
+    "launchArgsSkipped": "{{profile}} 未使用自定义启动参数。{{reason}}",
+    "timezoneModeLabel": "时区选择",
+    "timezoneModeAuto": "跟随定位设置",
+    "timezoneModeManual": "手动指定",
+    "timezoneSearch": "搜索时区…",
+    "timezoneNoResults": "没有匹配的时区。",
+    "timezoneChoiceDescription": "手动选择仅修改此环境的时区，夏令时自动计算。语言和地理位置保留现有设置，修改后下次启动生效。"
   },
   "warnings": {
     "windowResizeTitle": "自定义窗口尺寸",
@@ -2426,7 +2432,8 @@
     "feedbackInvalid": "反馈未被接受。请检查消息后重试。",
     "feedbackRateLimited": "你在短时间内发送了大量反馈。请几分钟后再试。",
     "feedbackSendFailed": "无法发送反馈。请稍后再试。",
-    "feedbackLogsUnreadable": "无法读取日志。请关闭“附上最近的日志”后重新发送。"
+    "feedbackLogsUnreadable": "无法读取日志。请关闭“附上最近的日志”后重新发送。",
+    "timezoneOverrideInvalid": "{{timezone}} 不是受支持的 IANA 时区。"
   },
   "rail": {
     "profiles": "配置文件",

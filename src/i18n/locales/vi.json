@@ -1387,7 +1387,13 @@
     "enterAsJson": "Nhập {{title}} dưới dạng JSON",
     "launchArgs": "Tham số khởi chạy",
     "launchArgsDescription": "Nhập một tham số trên mỗi dòng, dạng --name hoặc --name=value. Chỉ chấp nhận các tham số được hỗ trợ, ví dụ --disable-gpu, --mute-audio hoặc --disable-features=Name. Donut quản lý các tham số hồ sơ, proxy, cửa sổ và gỡ lỗi.",
-    "launchArgsSkipped": "Các tham số khởi chạy tùy chỉnh không được dùng cho {{profile}}. {{reason}}"
+    "launchArgsSkipped": "Các tham số khởi chạy tùy chỉnh không được dùng cho {{profile}}. {{reason}}",
+    "timezoneModeLabel": "Chọn múi giờ",
+    "timezoneModeAuto": "Theo cài đặt vị trí",
+    "timezoneModeManual": "Chọn thủ công",
+    "timezoneSearch": "Tìm múi giờ…",
+    "timezoneNoResults": "Không có múi giờ phù hợp.",
+    "timezoneChoiceDescription": "Lựa chọn thủ công chỉ thay đổi múi giờ của hồ sơ này. Giờ mùa hè được tính tự động. Ngôn ngữ và vị trí giữ cài đặt hiện tại. Thay đổi có hiệu lực ở lần khởi chạy tiếp theo."
   },
   "warnings": {
     "windowResizeTitle": "Kích thước cửa sổ tùy chỉnh",
@@ -2426,7 +2432,8 @@
     "feedbackInvalid": "Phản hồi không được chấp nhận. Hãy kiểm tra tin nhắn và thử lại.",
     "feedbackRateLimited": "Bạn đã gửi nhiều phản hồi trong thời gian ngắn. Hãy thử lại sau vài phút.",
     "feedbackSendFailed": "Không thể gửi phản hồi. Hãy thử lại sau.",
-    "feedbackLogsUnreadable": "Không thể đọc nhật ký. Hãy tắt \"Đính kèm nhật ký gần đây\" rồi gửi lại."
+    "feedbackLogsUnreadable": "Không thể đọc nhật ký. Hãy tắt \"Đính kèm nhật ký gần đây\" rồi gửi lại.",
+    "timezoneOverrideInvalid": "{{timezone}} không phải múi giờ IANA được hỗ trợ."
   },
   "rail": {
     "profiles": "Profile",

@@ -238,16 +238,23 @@ fn language_matches_country(cc: &str, language: &str) -> Option<bool> {
 /// one level down. Sharing the accessor is what keeps the two from drifting
 /// apart again.
 fn fingerprint_locale(profile: &BrowserProfile) -> (Option<String>, Option<String>) {
+  let selected_timezone = profile
+    .wayfern_config
+    .as_ref()
+    .and_then(|config| config.timezone_override.clone());
   let Some(fp) = profile
     .wayfern_config
     .as_ref()
     .and_then(|config| config.location.as_deref().or(config.fingerprint.as_deref()))
     .and_then(crate::wayfern_manager::WayfernManager::fingerprint_object)
   else {
-    return (None, None);
+    return (selected_timezone, None);
   };
   let read = |key: &str| fp.get(key).and_then(|v| v.as_str()).map(str::to_string);
-  (read("timezone"), read("language"))
+  (
+    selected_timezone.or_else(|| read("timezone")),
+    read("language"),
+  )
 }
 
 pub(crate) fn fingerprint_timezone(profile: &BrowserProfile) -> Option<String> {
@@ -495,6 +502,7 @@ pub async fn match_profile_fingerprint_to_exit(
     .clone()
     .filter(|c| c.fingerprint.is_some() || c.identity_id.is_some())
     .ok_or_else(|| serde_json::json!({ "code": "FINGERPRINT_MATCH_FAILED" }).to_string())?;
+  config.normalize_timezone_override()?;
 
   let geoip_override = serde_json::Value::String(exit_ip);
   if let Some(fingerprint) = config.fingerprint.clone() {
@@ -521,6 +529,11 @@ pub async fn match_profile_fingerprint_to_exit(
     config.location = crate::wayfern_manager::WayfernManager::fingerprint_object(&refreshed)
       .and_then(|object| crate::wayfern_manager::WayfernManager::location_of(&object));
   }
+  // Matching the proxy updates exit-derived language/coordinates, but an
+  // explicit clock remains the user's choice and still participates in the
+  // normal mismatch warning.
+  crate::wayfern_manager::WayfernManager::apply_config_timezone_override(&mut config)?;
+  config.timezone_auto_pending = false;
   profile.wayfern_config = Some(config);
   manager.save_profile(&profile).map_err(|e| {
     serde_json::json!({ "code": "INTERNAL_ERROR", "params": { "detail": e.to_string() } })
@@ -667,6 +680,25 @@ mod tests {
       ..Default::default()
     });
     profile
+  }
+
+  #[test]
+  fn timezone_manual_selection_still_reports_a_real_exit_mismatch() {
+    let mut profile = profile_with_fingerprint("America/Chicago", "en-US");
+    profile.wayfern_config.as_mut().unwrap().timezone_override = Some("America/Los_Angeles".into());
+    let result = compare_exit_to_fingerprint(
+      &profile,
+      Some("America/Chicago".into()),
+      Some("US".into()),
+      None,
+    );
+    assert_eq!(
+      result.fingerprint_timezone.as_deref(),
+      Some("America/Los_Angeles")
+    );
+    assert_eq!(result.exit_timezone.as_deref(), Some("America/Chicago"));
+    assert!(result.is_mismatch());
+    assert_eq!(result.mismatches, vec!["timezone"]);
   }
 
   #[test]

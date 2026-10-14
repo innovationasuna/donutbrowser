@@ -31,6 +31,14 @@ pub struct WayfernConfig {
   pub screen_min_height: Option<u32>,
   #[serde(default)]
   pub geoip: Option<serde_json::Value>, // For compatibility with shared config form
+  /// A per-profile IANA timezone. `None` follows the existing GeoIP settings;
+  /// this travels as location data, never as a paid device override.
+  #[serde(default)]
+  pub timezone_override: Option<String>,
+  /// Only an explicit Manual -> Auto edit schedules a clock refresh. Older
+  /// profiles with unknown location retain their existing launch behavior.
+  #[serde(default)]
+  pub timezone_auto_pending: bool,
   #[serde(default)]
   pub block_images: Option<bool>, // For compatibility with shared config form
   /// LEGACY on/off switch kept for stored configs; `webrtc_mode` wins when
@@ -95,6 +103,20 @@ pub struct WayfernConfig {
 }
 
 impl WayfernConfig {
+  pub(crate) fn normalize_timezone_override(&mut self) -> Result<(), String> {
+    if let Some(timezone) = &self.timezone_override {
+      let zone = timezone.trim().parse::<chrono_tz::Tz>().map_err(|_| {
+        serde_json::json!({
+          "code": "TIMEZONE_OVERRIDE_INVALID",
+          "params": { "timezone": timezone }
+        })
+        .to_string()
+      })?;
+      self.timezone_override = Some(zone.name().to_string());
+    }
+    Ok(())
+  }
+
   pub async fn checked_launch_args(&self) -> Result<Vec<String>, String> {
     let has_args = self.launch_args.iter().any(|arg| !arg.trim().is_empty());
     let allowed = !has_args
@@ -1627,6 +1649,111 @@ impl WayfernManager {
     Some(-(offset_seconds / 60))
   }
 
+  fn write_timezone(
+    object: &mut serde_json::Map<String, serde_json::Value>,
+    timezone: Option<&str>,
+  ) {
+    object.remove("timezone");
+    object.remove("timezoneOffset");
+    if let Some(timezone) = timezone {
+      object.insert("timezone".to_string(), json!(timezone));
+      if let Some(minutes) = Self::timezone_offset_minutes(timezone) {
+        object.insert("timezoneOffset".to_string(), json!(minutes));
+      }
+    }
+  }
+
+  /// Change only the clock, keeping the identity, hardware overrides and all
+  /// other location fields. Legacy payload wrappers remain intact as well.
+  pub(crate) fn set_config_timezone(
+    config: &mut WayfernConfig,
+    timezone: Option<&str>,
+  ) -> Result<(), String> {
+    let mut location = Self::stored_object(config.location.as_deref());
+    if config.location.is_none() {
+      location = config
+        .fingerprint
+        .as_deref()
+        .and_then(Self::fingerprint_object)
+        .and_then(|object| Self::location_of(&object))
+        .as_deref()
+        .map(|json| Self::stored_object(Some(json)))
+        .unwrap_or_default();
+    }
+    Self::write_timezone(&mut location, timezone);
+    let location = (!location.is_empty()).then(|| json!(location).to_string());
+    let fingerprint = if let Some(stored) = &config.fingerprint {
+      let mut value: serde_json::Value = serde_json::from_str(stored)
+        .map_err(|_| crate::backend_error("FINGERPRINT_MATCH_FAILED"))?;
+      let object = if value.get("fingerprint").is_some() {
+        value.get_mut("fingerprint").and_then(|v| v.as_object_mut())
+      } else {
+        value.as_object_mut()
+      }
+      .ok_or_else(|| crate::backend_error("FINGERPRINT_MATCH_FAILED"))?;
+      Self::write_timezone(object, timezone);
+      Some(value.to_string())
+    } else {
+      None
+    };
+    config.location = location;
+    config.fingerprint = fingerprint;
+    if timezone.is_some() {
+      config.timezone_auto_pending = false;
+    }
+    Ok(())
+  }
+
+  pub(crate) fn apply_config_timezone_override(config: &mut WayfernConfig) -> Result<(), String> {
+    config.normalize_timezone_override()?;
+    if let Some(timezone) = config.timezone_override.clone() {
+      Self::set_config_timezone(config, Some(&timezone))?;
+    }
+    Ok(())
+  }
+
+  /// Switching to Auto clears the old manual clock. The normal launcher will
+  /// resolve it through its already-started proxy/VPN before spawning a browser.
+  pub(crate) fn prepare_timezone_edit(
+    stored: Option<&WayfernConfig>,
+    config: &mut WayfernConfig,
+  ) -> Result<(), String> {
+    config.normalize_timezone_override()?;
+    if config.timezone_override.is_some() {
+      return Self::apply_config_timezone_override(config);
+    }
+    if stored.is_some_and(|old| old.timezone_override.is_some()) {
+      if matches!(config.geoip, Some(serde_json::Value::Bool(false))) {
+        return Err(crate::backend_error("FINGERPRINT_MATCH_FAILED"));
+      }
+      Self::set_config_timezone(config, None)?;
+      config.geo_proxy_signature = None;
+      config.timezone_auto_pending = true;
+    } else if stored.is_some_and(|old| old.timezone_auto_pending) {
+      config.timezone_auto_pending = true;
+    }
+    Ok(())
+  }
+
+  pub(crate) fn needs_automatic_timezone(config: &WayfernConfig) -> bool {
+    config.timezone_auto_pending && config.timezone_override.is_none()
+  }
+
+  pub(crate) async fn resolve_automatic_timezone(
+    config: &mut WayfernConfig,
+    proxy: Option<&str>,
+  ) -> Result<(), String> {
+    let mut resolved = json!({});
+    if !Self::apply_geolocation(&mut resolved, proxy, config.geoip.as_ref()).await {
+      return Err(crate::backend_error("FINGERPRINT_MATCH_FAILED"));
+    }
+    let timezone = resolved["timezone"]
+      .as_str()
+      .ok_or_else(|| crate::backend_error("FINGERPRINT_MATCH_FAILED"))?;
+    Self::set_config_timezone(config, Some(timezone))?;
+    Ok(())
+  }
+
   /// The bare language subtag of a BCP 47 tag (`de-DE` -> `de`), which is the
   /// second entry of the `languages` ladder donut builds. `Locale::language` is
   /// itself the first `-`-separated part of the tag, so this reproduces it.
@@ -2380,6 +2507,9 @@ impl WayfernManager {
     profile: &BrowserProfile,
     config: &WayfernConfig,
   ) -> Result<GeneratedFingerprint, Box<dyn std::error::Error + Send + Sync>> {
+    let mut checked_config = config.clone();
+    checked_config.normalize_timezone_override()?;
+    let config = &checked_config;
     let wayfern_token = crate::cloud_auth::CLOUD_AUTH.get_wayfern_token().await;
     let session = HeadlessWayfern::start(
       self,
@@ -2499,6 +2629,12 @@ impl WayfernManager {
         };
 
         transport.shutdown().await;
+
+        if let Some(timezone) = config.timezone_override.as_deref() {
+          if let Some(object) = normalized.as_object_mut() {
+            Self::write_timezone(object, Some(timezone));
+          }
+        }
 
         (normalized, identity_id, geolocation_applied)
       }
@@ -5416,6 +5552,164 @@ mod tests {
     assert_eq!(
       fit_window_to_work_area((800, 600), Some((3840, 2160))),
       (800, 600)
+    );
+  }
+
+  #[test]
+  fn timezone_selection_defaults_to_auto_and_validates_iana_names() {
+    for json in ["{}", r#"{"timezone_override":null}"#] {
+      let mut config: WayfernConfig = serde_json::from_str(json).unwrap();
+      config.normalize_timezone_override().unwrap();
+      assert!(config.timezone_override.is_none());
+    }
+    let mut config = WayfernConfig {
+      timezone_override: Some(" America/Los_Angeles ".into()),
+      ..Default::default()
+    };
+    config.normalize_timezone_override().unwrap();
+    assert_eq!(
+      config.timezone_override.as_deref(),
+      Some("America/Los_Angeles")
+    );
+    for invalid in ["", "Mars/Olympus", "--timezone=UTC", "GMT+8"] {
+      config.timezone_override = Some(invalid.into());
+      let error: serde_json::Value =
+        serde_json::from_str(&config.normalize_timezone_override().unwrap_err()).unwrap();
+      assert_eq!(error["code"], "TIMEZONE_OVERRIDE_INVALID");
+    }
+  }
+
+  #[test]
+  fn timezone_selection_changes_the_launch_clock_without_hardware_overrides() {
+    let mut config = identity_config(Some("America/Chicago"));
+    config.timezone_override = Some("America/Los_Angeles".into());
+    config.identity_overrides = Some(r#"{"hardwareConcurrency":8}"#.into());
+    let identity = config.identity_id.clone();
+    let overrides = config.identity_overrides.clone();
+    let mut location = WayfernManager::stored_object(config.location.as_deref());
+    location.insert("language".into(), json!("en-US"));
+    location.insert("latitude".into(), json!(41.0));
+    config.location = Some(json!(location).to_string());
+
+    WayfernManager::apply_config_timezone_override(&mut config).unwrap();
+    let location = WayfernManager::stored_object(config.location.as_deref());
+    assert_eq!(location["timezone"], "America/Los_Angeles");
+    assert_eq!(
+      location["timezoneOffset"],
+      json!(WayfernManager::timezone_offset_minutes("America/Los_Angeles").unwrap())
+    );
+    assert_eq!(location["language"], "en-US");
+    assert_eq!(location["latitude"], 41.0);
+    assert_eq!(config.identity_id, identity);
+    assert_eq!(config.identity_overrides, overrides);
+    let document = WayfernManager::launch_identity_document(&config).unwrap();
+    assert_eq!(document["timezone"], "America/Los_Angeles");
+    assert!(document["overrides"].get("timezone").is_none());
+  }
+
+  #[test]
+  fn timezone_selection_preserves_legacy_wrappers_and_locale() {
+    let fingerprint = json!({"fingerprint": {
+      "timezone": "America/Chicago", "timezoneOffset": 300,
+      "language": "en-US", "languages": ["en-US", "en"],
+      "hardwareConcurrency": 8, "canvasNoiseSeed": 123
+    }});
+    let mut config = WayfernConfig {
+      fingerprint: Some(fingerprint.to_string()),
+      timezone_override: Some("Asia/Tokyo".into()),
+      ..Default::default()
+    };
+    WayfernManager::apply_config_timezone_override(&mut config).unwrap();
+    let stored: serde_json::Value =
+      serde_json::from_str(config.fingerprint.as_deref().unwrap()).unwrap();
+    assert!(stored.get("fingerprint").is_some());
+    let payload =
+      WayfernManager::launch_fingerprint_payload(config.fingerprint.as_deref().unwrap()).unwrap();
+    assert_eq!(payload["timezone"], "Asia/Tokyo");
+    assert_eq!(payload["timezoneOffset"], -540);
+    assert_eq!(payload["hardwareConcurrency"], 8);
+    assert_eq!(payload["canvasNoiseSeed"], 123);
+    let location = WayfernManager::stored_object(config.location.as_deref());
+    assert_eq!(location["language"], "en-US");
+    assert!(location.get("hardwareConcurrency").is_none());
+    assert!(config.identity_overrides.is_none());
+  }
+
+  #[test]
+  fn timezone_auto_clears_a_manual_clock_without_regenerating_the_device() {
+    let mut stored = identity_config(Some("Asia/Tokyo"));
+    stored.timezone_override = Some("Asia/Tokyo".into());
+    stored.geo_proxy_signature = Some("v2:proxy:example".into());
+    let mut config = stored.clone();
+    config.timezone_override = None;
+    WayfernManager::prepare_timezone_edit(Some(&stored), &mut config).unwrap();
+    assert_eq!(config.identity_id, stored.identity_id);
+    assert_eq!(config.identity_overrides, stored.identity_overrides);
+    assert!(config.geo_proxy_signature.is_none());
+    let location = WayfernManager::stored_object(config.location.as_deref());
+    assert!(location.get("timezone").is_none());
+    assert!(location.get("timezoneOffset").is_none());
+    assert!(WayfernManager::needs_automatic_timezone(&config));
+
+    WayfernManager::set_config_timezone(&mut config, Some("America/Chicago")).unwrap();
+    assert!(!WayfernManager::needs_automatic_timezone(&config));
+    assert!(config.timezone_override.is_none());
+    assert_eq!(
+      WayfernManager::launch_identity_document(&config).unwrap()["timezone"],
+      "America/Chicago"
+    );
+  }
+
+  #[test]
+  fn timezone_auto_refuses_disabled_geoip_without_erasing_the_saved_clock() {
+    let mut stored = identity_config(Some("Asia/Tokyo"));
+    stored.timezone_override = Some("Asia/Tokyo".into());
+    stored.geoip = Some(json!(false));
+    let mut config = stored.clone();
+    config.timezone_override = None;
+    assert!(WayfernManager::prepare_timezone_edit(Some(&stored), &mut config).is_err());
+    assert_eq!(config.location, stored.location);
+  }
+
+  #[tokio::test]
+  async fn timezone_auto_probe_failure_keeps_the_clock_unresolved() {
+    let mut config = identity_config(None);
+    config.geoip = Some(json!("not-an-ip"));
+    config.timezone_auto_pending = true;
+    let before = serde_json::to_value(&config).unwrap();
+    let error = WayfernManager::resolve_automatic_timezone(&mut config, None)
+      .await
+      .unwrap_err();
+    assert_eq!(
+      serde_json::from_str::<serde_json::Value>(&error).unwrap()["code"],
+      "FINGERPRINT_MATCH_FAILED"
+    );
+    assert_eq!(serde_json::to_value(&config).unwrap(), before);
+    assert!(WayfernManager::needs_automatic_timezone(&config));
+  }
+
+  #[test]
+  fn timezone_auto_does_not_change_old_unknown_location_launches() {
+    let config: WayfernConfig = serde_json::from_str(r#"{"identity_id":"old-device"}"#).unwrap();
+    assert!(config.timezone_override.is_none());
+    assert!(!config.timezone_auto_pending);
+    assert!(!WayfernManager::needs_automatic_timezone(&config));
+  }
+
+  #[test]
+  fn timezone_selection_survives_exit_rematching_and_config_roundtrips() {
+    let mut config = identity_config(Some("Asia/Tokyo"));
+    config.timezone_override = Some("Asia/Tokyo".into());
+    // The same location writer is used after a newly generated identity and
+    // after matching an existing profile to its proxy's exit.
+    WayfernManager::set_config_timezone(&mut config, Some("America/Chicago")).unwrap();
+    WayfernManager::apply_config_timezone_override(&mut config).unwrap();
+    let saved = serde_json::to_string(&config).unwrap();
+    let config: WayfernConfig = serde_json::from_str(&saved).unwrap();
+    assert_eq!(config.timezone_override.as_deref(), Some("Asia/Tokyo"));
+    assert_eq!(
+      WayfernManager::launch_identity_document(&config).unwrap()["timezone"],
+      "Asia/Tokyo"
     );
   }
 }

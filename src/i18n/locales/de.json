@@ -1387,7 +1387,13 @@
     "enterAsJson": "{{title}} als JSON eingeben",
     "launchArgs": "Startargumente",
     "launchArgsDescription": "Gib ein Argument pro Zeile ein, als --name oder --name=value. Nur unterstützte Argumente werden angenommen, zum Beispiel --disable-gpu, --mute-audio oder --disable-features=Name. Donut verwaltet die Argumente für Profil, Proxy, Fenster und Debugging.",
-    "launchArgsSkipped": "Die eigenen Startargumente wurden für {{profile}} nicht verwendet. {{reason}}"
+    "launchArgsSkipped": "Die eigenen Startargumente wurden für {{profile}} nicht verwendet. {{reason}}",
+    "timezoneModeLabel": "Zeitzonenauswahl",
+    "timezoneModeAuto": "Standorteinstellungen folgen",
+    "timezoneModeManual": "Manuell auswählen",
+    "timezoneSearch": "Zeitzonen suchen…",
+    "timezoneNoResults": "Keine passende Zeitzone.",
+    "timezoneChoiceDescription": "Die manuelle Auswahl ändert nur die Zeitzone dieses Profils. Die Sommerzeit wird automatisch berechnet. Sprache und Standort behalten ihre bisherigen Einstellungen. Änderungen gelten ab dem nächsten Start."
   },
   "warnings": {
     "windowResizeTitle": "Benutzerdefinierte Fenstergröße",
@@ -2426,7 +2432,8 @@
     "feedbackInvalid": "Das Feedback wurde nicht angenommen. Prüfen Sie die Nachricht und versuchen Sie es erneut.",
     "feedbackRateLimited": "Sie haben in kurzer Zeit viel Feedback gesendet. Versuchen Sie es in ein paar Minuten erneut.",
     "feedbackSendFailed": "Das Feedback konnte nicht gesendet werden. Versuchen Sie es später erneut.",
-    "feedbackLogsUnreadable": "Die Protokolle konnten nicht gelesen werden. Schalten Sie „Aktuelle Protokolle anhängen“ aus und senden Sie erneut."
+    "feedbackLogsUnreadable": "Die Protokolle konnten nicht gelesen werden. Schalten Sie „Aktuelle Protokolle anhängen“ aus und senden Sie erneut.",
+    "timezoneOverrideInvalid": "{{timezone}} ist keine unterstützte IANA-Zeitzone."
   },
   "rail": {
     "profiles": "Profile",
