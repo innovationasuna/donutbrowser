@@ -1393,7 +1393,15 @@
     "timezoneModeManual": "Elle seç",
     "timezoneSearch": "Saat dilimi ara…",
     "timezoneNoResults": "Eşleşen saat dilimi yok.",
-    "timezoneChoiceDescription": "Elle seçim yalnızca bu profilin saat dilimini değiştirir. Yaz saati otomatik hesaplanır. Dil ve konum mevcut ayarlarını korur. Değişiklikler sonraki başlatmada uygulanır."
+    "timezoneChoiceDescription": "Elle seçim yalnızca bu profilin saat dilimini değiştirir. Yaz saati otomatik hesaplanır. Dil ve konum mevcut ayarlarını korur. Değişiklikler sonraki başlatmada uygulanır.",
+    "languageModeLabel": "Web dili seçimi",
+    "languageModeAuto": "Konum ayarlarını izle",
+    "languageModeManual": "Elle seç",
+    "languageSearch": "Dil ara…",
+    "languageNoResults": "Eşleşen dil yok",
+    "languageChoiceDescription": "Siteler {{languages}} alır. Tarayıcı menüleri ve Donut arayüzünün dili ayrıdır. Sonraki başlatmada uygulanır.",
+    "languageAutoDescription": "Mevcut konum davranışını korur. Otomatik moda dönmeden önce otomatik konumu etkinleştirin.",
+    "languageLocale": "Tercih edilen web dili"
   },
   "warnings": {
     "windowResizeTitle": "Özel Pencere Boyutları",
@@ -2433,7 +2441,8 @@
     "feedbackRateLimited": "Kısa sürede çok fazla geri bildirim gönderdiniz. Birkaç dakika sonra tekrar deneyin.",
     "feedbackSendFailed": "Geri bildirim gönderilemedi. Daha sonra tekrar deneyin.",
     "feedbackLogsUnreadable": "Günlükler okunamadı. \"Son günlükleri ekle\" seçeneğini kapatıp tekrar gönderin.",
-    "timezoneOverrideInvalid": "{{timezone}} desteklenen bir IANA saat dilimi değil."
+    "timezoneOverrideInvalid": "{{timezone}} desteklenen bir IANA saat dilimi değil.",
+    "languageOverrideInvalid": "Desteklenmeyen web dili: {{language}}."
   },
   "rail": {
     "profiles": "Profiller",

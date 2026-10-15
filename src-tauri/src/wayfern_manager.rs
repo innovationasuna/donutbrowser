@@ -39,6 +39,12 @@ pub struct WayfernConfig {
   /// profiles with unknown location retain their existing launch behavior.
   #[serde(default)]
   pub timezone_auto_pending: bool,
+  /// Primary web language. The browser derives its language ladder from this
+  /// locale; browser chrome and the manager's UI language are independent.
+  #[serde(default)]
+  pub language_override: Option<String>,
+  #[serde(default)]
+  pub language_auto_pending: bool,
   #[serde(default)]
   pub block_images: Option<bool>, // For compatibility with shared config form
   /// LEGACY on/off switch kept for stored configs; `webrtc_mode` wins when
@@ -113,6 +119,22 @@ impl WayfernConfig {
         .to_string()
       })?;
       self.timezone_override = Some(zone.name().to_string());
+    }
+    Ok(())
+  }
+
+  pub(crate) fn normalize_language_override(&mut self) -> Result<(), String> {
+    if let Some(language) = &self.language_override {
+      let options: Vec<String> =
+        serde_json::from_str(include_str!("../../src/lib/browser-language-options.json"))
+          .expect("browser language catalog is valid JSON");
+      let normalized = options
+        .into_iter()
+        .find(|option| option.eq_ignore_ascii_case(language.trim()));
+      self.language_override = Some(normalized.ok_or_else(|| {
+        serde_json::json!({"code": "LANGUAGE_OVERRIDE_INVALID", "params": {"language": language}})
+          .to_string()
+      })?);
     }
     Ok(())
   }
@@ -1704,10 +1726,90 @@ impl WayfernManager {
     Ok(())
   }
 
-  pub(crate) fn apply_config_timezone_override(config: &mut WayfernConfig) -> Result<(), String> {
+  pub(crate) fn apply_config_location_overrides(config: &mut WayfernConfig) -> Result<(), String> {
     config.normalize_timezone_override()?;
+    config.normalize_language_override()?;
     if let Some(timezone) = config.timezone_override.clone() {
       Self::set_config_timezone(config, Some(&timezone))?;
+    }
+    if let Some(language) = config.language_override.clone() {
+      Self::set_config_language(config, Some(&language))?;
+    }
+    Ok(())
+  }
+
+  fn write_language(
+    object: &mut serde_json::Map<String, serde_json::Value>,
+    language: Option<&str>,
+  ) {
+    object.remove("language");
+    object.remove("languages");
+    if let Some(language) = language {
+      object.insert("language".into(), json!(language));
+      let base = Self::base_language(language);
+      object.insert(
+        "languages".into(),
+        if base == language {
+          json!([language])
+        } else {
+          json!([language, base])
+        },
+      );
+    }
+  }
+
+  fn set_config_language(config: &mut WayfernConfig, language: Option<&str>) -> Result<(), String> {
+    let mut location = Self::stored_object(config.location.as_deref());
+    if config.location.is_none() {
+      location = config
+        .fingerprint
+        .as_deref()
+        .and_then(Self::fingerprint_object)
+        .and_then(|object| Self::location_of(&object))
+        .as_deref()
+        .map(|json| Self::stored_object(Some(json)))
+        .unwrap_or_default();
+    }
+    Self::write_language(&mut location, language);
+    let fingerprint = if let Some(stored) = &config.fingerprint {
+      let mut value: serde_json::Value = serde_json::from_str(stored)
+        .map_err(|_| crate::backend_error("FINGERPRINT_MATCH_FAILED"))?;
+      let object = if value.get("fingerprint").is_some() {
+        value.get_mut("fingerprint").and_then(|v| v.as_object_mut())
+      } else {
+        value.as_object_mut()
+      }
+      .ok_or_else(|| crate::backend_error("FINGERPRINT_MATCH_FAILED"))?;
+      Self::write_language(object, language);
+      Some(value.to_string())
+    } else {
+      None
+    };
+    config.location = (!location.is_empty()).then(|| json!(location).to_string());
+    config.fingerprint = fingerprint;
+    if language.is_some() {
+      config.language_auto_pending = false;
+    }
+    Ok(())
+  }
+
+  pub(crate) fn prepare_language_edit(
+    stored: Option<&WayfernConfig>,
+    config: &mut WayfernConfig,
+  ) -> Result<(), String> {
+    config.normalize_language_override()?;
+    if config.language_override.is_some() {
+      return Self::apply_config_location_overrides(config);
+    }
+    if stored.is_some_and(|old| old.language_override.is_some()) {
+      if matches!(config.geoip, Some(serde_json::Value::Bool(false))) {
+        return Err(crate::backend_error("FINGERPRINT_MATCH_FAILED"));
+      }
+      Self::set_config_language(config, None)?;
+      config.geo_proxy_signature = None;
+      config.language_auto_pending = true;
+    } else if stored.is_some_and(|old| old.language_auto_pending) {
+      config.language_auto_pending = true;
     }
     Ok(())
   }
@@ -1720,7 +1822,7 @@ impl WayfernManager {
   ) -> Result<(), String> {
     config.normalize_timezone_override()?;
     if config.timezone_override.is_some() {
-      return Self::apply_config_timezone_override(config);
+      return Self::apply_config_location_overrides(config);
     }
     if stored.is_some_and(|old| old.timezone_override.is_some()) {
       if matches!(config.geoip, Some(serde_json::Value::Bool(false))) {
@@ -1739,6 +1841,10 @@ impl WayfernManager {
     config.timezone_auto_pending && config.timezone_override.is_none()
   }
 
+  pub(crate) fn needs_automatic_language(config: &WayfernConfig) -> bool {
+    config.language_auto_pending && config.language_override.is_none()
+  }
+
   pub(crate) async fn resolve_automatic_timezone(
     config: &mut WayfernConfig,
     proxy: Option<&str>,
@@ -1747,11 +1853,21 @@ impl WayfernManager {
     if !Self::apply_geolocation(&mut resolved, proxy, config.geoip.as_ref()).await {
       return Err(crate::backend_error("FINGERPRINT_MATCH_FAILED"));
     }
-    let timezone = resolved["timezone"]
-      .as_str()
-      .ok_or_else(|| crate::backend_error("FINGERPRINT_MATCH_FAILED"))?;
-    Self::set_config_timezone(config, Some(timezone))?;
-    Ok(())
+    // Resolve only pending dimensions. A language edit must not change a
+    // manually chosen clock, or the existing automatic clock, and vice versa.
+    if Self::needs_automatic_timezone(config) {
+      let timezone = resolved["timezone"]
+        .as_str()
+        .ok_or_else(|| crate::backend_error("FINGERPRINT_MATCH_FAILED"))?;
+      Self::set_config_timezone(config, Some(timezone))?;
+    }
+    if Self::needs_automatic_language(config) {
+      let language = resolved["language"]
+        .as_str()
+        .ok_or_else(|| crate::backend_error("FINGERPRINT_MATCH_FAILED"))?;
+      Self::set_config_language(config, Some(language))?;
+    }
+    Self::apply_config_location_overrides(config)
   }
 
   /// The bare language subtag of a BCP 47 tag (`de-DE` -> `de`), which is the
@@ -2509,6 +2625,7 @@ impl WayfernManager {
   ) -> Result<GeneratedFingerprint, Box<dyn std::error::Error + Send + Sync>> {
     let mut checked_config = config.clone();
     checked_config.normalize_timezone_override()?;
+    checked_config.normalize_language_override()?;
     let config = &checked_config;
     let wayfern_token = crate::cloud_auth::CLOUD_AUTH.get_wayfern_token().await;
     let session = HeadlessWayfern::start(
@@ -2636,6 +2753,11 @@ impl WayfernManager {
           }
         }
 
+        if let Some(language) = config.language_override.as_deref() {
+          if let Some(object) = normalized.as_object_mut() {
+            Self::write_language(object, Some(language));
+          }
+        }
         (normalized, identity_id, geolocation_applied)
       }
       Err(e) => {
@@ -5556,6 +5678,96 @@ mod tests {
   }
 
   #[test]
+  fn language_selection_validates_and_normalizes_the_catalog() {
+    let mut config: WayfernConfig = serde_json::from_str("{}").unwrap();
+    config.normalize_language_override().unwrap();
+    assert!(config.language_override.is_none());
+    config.language_override = Some(" en-us ".into());
+    config.normalize_language_override().unwrap();
+    assert_eq!(config.language_override.as_deref(), Some("en-US"));
+    for invalid in ["", "en_US", "--lang=en", "not-a-language"] {
+      config.language_override = Some(invalid.into());
+      let error: serde_json::Value =
+        serde_json::from_str(&config.normalize_language_override().unwrap_err()).unwrap();
+      assert_eq!(error["code"], "LANGUAGE_OVERRIDE_INVALID");
+    }
+  }
+
+  #[test]
+  fn language_selection_reaches_launch_without_changing_clock_or_hardware() {
+    let mut config = identity_config(Some("America/Los_Angeles"));
+    config.language_override = Some("en-US".into());
+    config.identity_overrides = Some(r#"{"hardwareConcurrency":8}"#.into());
+    let id = config.identity_id.clone();
+    let overrides = config.identity_overrides.clone();
+    WayfernManager::apply_config_location_overrides(&mut config).unwrap();
+    let location = WayfernManager::stored_object(config.location.as_deref());
+    assert_eq!(location["language"], "en-US");
+    assert_eq!(location["languages"], json!(["en-US", "en"]));
+    assert_eq!(location["timezone"], "America/Los_Angeles");
+    assert_eq!(config.identity_id, id);
+    assert_eq!(config.identity_overrides, overrides);
+    assert_eq!(
+      WayfernManager::launch_identity_document(&config).unwrap()["language"],
+      "en-US"
+    );
+    // Re-matching a proxy may rewrite language, but the manual choice wins.
+    WayfernManager::set_config_language(&mut config, Some("de-DE")).unwrap();
+    WayfernManager::apply_config_location_overrides(&mut config).unwrap();
+    assert_eq!(
+      WayfernManager::stored_object(config.location.as_deref())["language"],
+      "en-US"
+    );
+  }
+
+  #[test]
+  fn language_selection_handles_legacy_payloads_and_auto_without_a_stale_locale() {
+    let mut stored = WayfernConfig {
+      fingerprint: Some(json!({"fingerprint":{"timezone":"Asia/Tokyo","language":"zh-CN","languages":["zh-CN","zh"],"hardwareConcurrency":8}}).to_string()),
+      language_override: Some("en-US".into()),
+      timezone_override: Some("Asia/Tokyo".into()),
+      ..Default::default()
+    };
+    WayfernManager::apply_config_location_overrides(&mut stored).unwrap();
+    let payload =
+      WayfernManager::launch_fingerprint_payload(stored.fingerprint.as_deref().unwrap()).unwrap();
+    assert_eq!(payload["language"], "en-US");
+    assert_eq!(payload["hardwareConcurrency"], 8);
+    let mut config = stored.clone();
+    config.language_override = None;
+    WayfernManager::prepare_language_edit(Some(&stored), &mut config).unwrap();
+    assert!(WayfernManager::needs_automatic_language(&config));
+    let payload =
+      WayfernManager::launch_fingerprint_payload(config.fingerprint.as_deref().unwrap()).unwrap();
+    assert!(payload.get("language").is_none());
+    assert!(payload.get("languages").is_none());
+    assert_eq!(payload["timezone"], "Asia/Tokyo");
+    config.geoip = Some(json!(false));
+    assert!(WayfernManager::prepare_language_edit(Some(&stored), &mut config).is_err());
+  }
+
+  #[tokio::test]
+  async fn language_auto_failure_keeps_pending_and_manual_clock() {
+    let mut config = WayfernConfig {
+      language_auto_pending: true,
+      timezone_override: Some("Asia/Tokyo".into()),
+      geoip: Some(json!(false)),
+      ..Default::default()
+    };
+    WayfernManager::apply_config_location_overrides(&mut config).unwrap();
+    assert!(
+      WayfernManager::resolve_automatic_timezone(&mut config, None)
+        .await
+        .is_err()
+    );
+    assert!(config.language_auto_pending);
+    assert_eq!(
+      WayfernManager::stored_object(config.location.as_deref())["timezone"],
+      "Asia/Tokyo"
+    );
+  }
+
+  #[test]
   fn timezone_selection_defaults_to_auto_and_validates_iana_names() {
     for json in ["{}", r#"{"timezone_override":null}"#] {
       let mut config: WayfernConfig = serde_json::from_str(json).unwrap();
@@ -5591,7 +5803,7 @@ mod tests {
     location.insert("latitude".into(), json!(41.0));
     config.location = Some(json!(location).to_string());
 
-    WayfernManager::apply_config_timezone_override(&mut config).unwrap();
+    WayfernManager::apply_config_location_overrides(&mut config).unwrap();
     let location = WayfernManager::stored_object(config.location.as_deref());
     assert_eq!(location["timezone"], "America/Los_Angeles");
     assert_eq!(
@@ -5619,7 +5831,7 @@ mod tests {
       timezone_override: Some("Asia/Tokyo".into()),
       ..Default::default()
     };
-    WayfernManager::apply_config_timezone_override(&mut config).unwrap();
+    WayfernManager::apply_config_location_overrides(&mut config).unwrap();
     let stored: serde_json::Value =
       serde_json::from_str(config.fingerprint.as_deref().unwrap()).unwrap();
     assert!(stored.get("fingerprint").is_some());
@@ -5703,7 +5915,7 @@ mod tests {
     // The same location writer is used after a newly generated identity and
     // after matching an existing profile to its proxy's exit.
     WayfernManager::set_config_timezone(&mut config, Some("America/Chicago")).unwrap();
-    WayfernManager::apply_config_timezone_override(&mut config).unwrap();
+    WayfernManager::apply_config_location_overrides(&mut config).unwrap();
     let saved = serde_json::to_string(&config).unwrap();
     let config: WayfernConfig = serde_json::from_str(&saved).unwrap();
     assert_eq!(config.timezone_override.as_deref(), Some("Asia/Tokyo"));

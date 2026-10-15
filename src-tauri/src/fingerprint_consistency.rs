@@ -503,6 +503,7 @@ pub async fn match_profile_fingerprint_to_exit(
     .filter(|c| c.fingerprint.is_some() || c.identity_id.is_some())
     .ok_or_else(|| serde_json::json!({ "code": "FINGERPRINT_MATCH_FAILED" }).to_string())?;
   config.normalize_timezone_override()?;
+  config.normalize_language_override()?;
 
   let geoip_override = serde_json::Value::String(exit_ip);
   if let Some(fingerprint) = config.fingerprint.clone() {
@@ -532,8 +533,9 @@ pub async fn match_profile_fingerprint_to_exit(
   // Matching the proxy updates exit-derived language/coordinates, but an
   // explicit clock remains the user's choice and still participates in the
   // normal mismatch warning.
-  crate::wayfern_manager::WayfernManager::apply_config_timezone_override(&mut config)?;
+  crate::wayfern_manager::WayfernManager::apply_config_location_overrides(&mut config)?;
   config.timezone_auto_pending = false;
+  config.language_auto_pending = false;
   profile.wayfern_config = Some(config);
   manager.save_profile(&profile).map_err(|e| {
     serde_json::json!({ "code": "INTERNAL_ERROR", "params": { "detail": e.to_string() } })

@@ -114,7 +114,7 @@ async function submitProfileCreation(app, name) {
   );
 }
 
-test("manual timezone selection saves without a paid fingerprint editor", async () => {
+test("manual timezone and language selection saves without a paid fingerprint editor", async () => {
   await withApp(
     "ui-manual-timezone",
     async (app) => {
@@ -172,7 +172,28 @@ test("manual timezone selection saves without a paid fingerprint editor", async 
         ),
         true,
       );
+      await chooseSelectOption(
+        app,
+        '[id$="-language-mode"][role="combobox"]',
+        en.fingerprint.languageModeManual,
+      );
+      await app.clickSelector('[id$="-language-locale"][role="combobox"]');
+      await app.fillSelector("[cmdk-input]", "en-US");
+      await app.clickSelector('[cmdk-item][data-language="en-US"]');
       const profile = await submitProfileCreation(app, "Manual timezone");
+      assert.equal(profile.wayfern_config.language_override, "en-US");
+      assert.equal(
+        JSON.parse(profile.wayfern_config.location).language,
+        "en-US",
+      );
+      assert.deepEqual(JSON.parse(profile.wayfern_config.location).languages, [
+        "en-US",
+        "en",
+      ]);
+      assert.equal(
+        JSON.parse(profile.wayfern_config.fingerprint).language,
+        "en-US",
+      );
       assert.equal(
         profile.wayfern_config.timezone_override,
         "America/Los_Angeles",

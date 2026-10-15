@@ -1399,7 +1399,15 @@
     "timezoneModeManual": "Choisir manuellement",
     "timezoneSearch": "Rechercher un fuseau…",
     "timezoneNoResults": "Aucun fuseau correspondant.",
-    "timezoneChoiceDescription": "Le choix manuel modifie uniquement le fuseau horaire de ce profil. L’heure d’été est calculée automatiquement. La langue et la localisation conservent leurs paramètres. Les changements prennent effet au prochain lancement."
+    "timezoneChoiceDescription": "Le choix manuel modifie uniquement le fuseau horaire de ce profil. L’heure d’été est calculée automatiquement. La langue et la localisation conservent leurs paramètres. Les changements prennent effet au prochain lancement.",
+    "languageModeLabel": "Langue web",
+    "languageModeAuto": "Suivre les réglages de localisation",
+    "languageModeManual": "Choisir manuellement",
+    "languageSearch": "Rechercher une langue…",
+    "languageNoResults": "Aucune langue correspondante",
+    "languageChoiceDescription": "Les sites reçoivent {{languages}}. Les menus du navigateur et Donut conservent leur propre langue. Applicable au prochain lancement.",
+    "languageAutoDescription": "Conserve le comportement de localisation. Activez la localisation automatique avant de revenir au mode automatique.",
+    "languageLocale": "Langue web préférée"
   },
   "warnings": {
     "windowResizeTitle": "Dimensions de fenêtre personnalisées",
@@ -2443,7 +2451,8 @@
     "feedbackRateLimited": "Vous avez envoyé beaucoup d'avis en peu de temps. Réessayez dans quelques minutes.",
     "feedbackSendFailed": "L'avis n'a pas pu être envoyé. Réessayez plus tard.",
     "feedbackLogsUnreadable": "Les journaux n'ont pas pu être lus. Désactivez « Joindre les journaux récents » et renvoyez.",
-    "timezoneOverrideInvalid": "{{timezone}} n’est pas un fuseau horaire IANA pris en charge."
+    "timezoneOverrideInvalid": "{{timezone}} n’est pas un fuseau horaire IANA pris en charge.",
+    "languageOverrideInvalid": "Langue web non prise en charge : {{language}}."
   },
   "rail": {
     "profiles": "Profils",

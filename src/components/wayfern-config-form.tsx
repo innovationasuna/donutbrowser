@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/language-selector";
 import { LoadingButton } from "@/components/loading-button";
 import { TimezoneSelector } from "@/components/timezone-selector";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -644,6 +645,11 @@ export function WayfernConfigForm({
       </div>
 
       <TimezoneSelector
+        config={config}
+        onConfigChange={onConfigChange}
+        readOnly={readOnly}
+      />
+      <LanguageSelector
         config={config}
         onConfigChange={onConfigChange}
         readOnly={readOnly}
@@ -1659,6 +1665,11 @@ export function WayfernConfigForm({
             </div>
 
             <TimezoneSelector
+              config={config}
+              onConfigChange={onConfigChange}
+              readOnly={readOnly}
+            />
+            <LanguageSelector
               config={config}
               onConfigChange={onConfigChange}
               readOnly={readOnly}

@@ -1393,7 +1393,15 @@
     "timezoneModeManual": "Manuell auswählen",
     "timezoneSearch": "Zeitzonen suchen…",
     "timezoneNoResults": "Keine passende Zeitzone.",
-    "timezoneChoiceDescription": "Die manuelle Auswahl ändert nur die Zeitzone dieses Profils. Die Sommerzeit wird automatisch berechnet. Sprache und Standort behalten ihre bisherigen Einstellungen. Änderungen gelten ab dem nächsten Start."
+    "timezoneChoiceDescription": "Die manuelle Auswahl ändert nur die Zeitzone dieses Profils. Die Sommerzeit wird automatisch berechnet. Sprache und Standort behalten ihre bisherigen Einstellungen. Änderungen gelten ab dem nächsten Start.",
+    "languageModeLabel": "Websprache",
+    "languageModeAuto": "Standorteinstellungen folgen",
+    "languageModeManual": "Manuell auswählen",
+    "languageSearch": "Sprachen suchen…",
+    "languageNoResults": "Keine passende Sprache",
+    "languageChoiceDescription": "Websites erhalten {{languages}}. Browsermenüs und Donut behalten ihre eigene Sprache. Gilt ab dem nächsten Start.",
+    "languageAutoDescription": "Behält das Standortverhalten bei. Vor der Rückkehr zur Automatik den automatischen Standort aktivieren.",
+    "languageLocale": "Bevorzugte Websprache"
   },
   "warnings": {
     "windowResizeTitle": "Benutzerdefinierte Fenstergröße",
@@ -2433,7 +2441,8 @@
     "feedbackRateLimited": "Sie haben in kurzer Zeit viel Feedback gesendet. Versuchen Sie es in ein paar Minuten erneut.",
     "feedbackSendFailed": "Das Feedback konnte nicht gesendet werden. Versuchen Sie es später erneut.",
     "feedbackLogsUnreadable": "Die Protokolle konnten nicht gelesen werden. Schalten Sie „Aktuelle Protokolle anhängen“ aus und senden Sie erneut.",
-    "timezoneOverrideInvalid": "{{timezone}} ist keine unterstützte IANA-Zeitzone."
+    "timezoneOverrideInvalid": "{{timezone}} ist keine unterstützte IANA-Zeitzone.",
+    "languageOverrideInvalid": "Nicht unterstützte Websprache: {{language}}."
   },
   "rail": {
     "profiles": "Profile",

@@ -347,7 +347,7 @@ impl BrowserRunner {
         log::debug!("No wayfern config, using default profile={}", profile.id);
         WayfernConfig::default()
       });
-      crate::wayfern_manager::WayfernManager::apply_config_timezone_override(&mut wayfern_config)?;
+      crate::wayfern_manager::WayfernManager::apply_config_location_overrides(&mut wayfern_config)?;
       // The gate must compare the clock this launch will really present,
       // including a manual selection received through import or sync.
       let mut prepared_profile = profile.clone();
@@ -602,6 +602,7 @@ impl BrowserRunner {
         let geolocation_applied = generated.geolocation_applied;
         if geolocation_applied {
           wayfern_config.timezone_auto_pending = false;
+          wayfern_config.language_auto_pending = false;
         }
 
         // Update the config with the new device for launching. An identity
@@ -620,6 +621,7 @@ impl BrowserRunner {
         // Save the updated device to the profile so it persists.
         let mut updated_wayfern_config = updated_profile.wayfern_config.clone().unwrap_or_default();
         updated_wayfern_config.timezone_auto_pending = wayfern_config.timezone_auto_pending;
+        updated_wayfern_config.language_auto_pending = wayfern_config.language_auto_pending;
         updated_wayfern_config.identity_id = generated.identity_id;
         updated_wayfern_config.location = generated.location;
         updated_wayfern_config.identity_baseline = None;
@@ -650,7 +652,9 @@ impl BrowserRunner {
         };
         updated_profile.wayfern_config = Some(updated_wayfern_config);
       }
-      if crate::wayfern_manager::WayfernManager::needs_automatic_timezone(&wayfern_config) {
+      if crate::wayfern_manager::WayfernManager::needs_automatic_timezone(&wayfern_config)
+        || crate::wayfern_manager::WayfernManager::needs_automatic_language(&wayfern_config)
+      {
         // A Manual -> Auto edit removed the old clock. Resolve through the
         // official launch route, after its proxy/VPN is ready, rather than
         // probing the host or keeping the stale manual value on failure.

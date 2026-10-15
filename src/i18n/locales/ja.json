@@ -1393,7 +1393,15 @@
     "timezoneModeManual": "手動で指定",
     "timezoneSearch": "タイムゾーンを検索…",
     "timezoneNoResults": "一致するタイムゾーンがありません。",
-    "timezoneChoiceDescription": "手動選択はこのプロファイルのタイムゾーンのみを変更します。夏時間は自動計算されます。言語と位置情報は現在の設定を維持し、変更は次回起動時に適用されます。"
+    "timezoneChoiceDescription": "手動選択はこのプロファイルのタイムゾーンのみを変更します。夏時間は自動計算されます。言語と位置情報は現在の設定を維持し、変更は次回起動時に適用されます。",
+    "languageModeLabel": "ウェブ言語の選択",
+    "languageModeAuto": "位置情報の設定に従う",
+    "languageModeManual": "手動で選択",
+    "languageSearch": "言語を検索…",
+    "languageNoResults": "一致する言語がありません",
+    "languageChoiceDescription": "サイトには {{languages}} が通知されます。ブラウザメニューと Donut の表示言語は別の設定です。次回起動時に適用されます。",
+    "languageAutoDescription": "現在の位置情報の動作を維持します。自動に戻す前に位置情報の自動設定を有効にしてください。",
+    "languageLocale": "ウェブの優先言語"
   },
   "warnings": {
     "windowResizeTitle": "カスタムウィンドウサイズ",
@@ -2433,7 +2441,8 @@
     "feedbackRateLimited": "短時間に多くのフィードバックが送信されました。数分後にもう一度お試しください。",
     "feedbackSendFailed": "フィードバックを送信できませんでした。しばらくしてからもう一度お試しください。",
     "feedbackLogsUnreadable": "ログを読み込めませんでした。「最近のログを添付」をオフにして、もう一度送信してください。",
-    "timezoneOverrideInvalid": "{{timezone}} は対応している IANA タイムゾーンではありません。"
+    "timezoneOverrideInvalid": "{{timezone}} は対応している IANA タイムゾーンではありません。",
+    "languageOverrideInvalid": "未対応のウェブ言語：{{language}}。"
   },
   "rail": {
     "profiles": "プロファイル",

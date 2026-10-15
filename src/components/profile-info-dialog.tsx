@@ -39,6 +39,7 @@ import {
   LuUsers,
   LuX,
 } from "react-icons/lu";
+import { LanguageSelector } from "@/components/language-selector";
 import { ProfileHandoffStatus } from "@/components/profile-handoff-status";
 import { ProfileLaunchActivity } from "@/components/profile-launch-activity";
 import { ProfileMetadataCard } from "@/components/profile-metadata-card";
@@ -2302,6 +2303,11 @@ function FingerprintSectionInline({
       ) : (
         <>
           <TimezoneSelector
+            config={wayfernConfig}
+            onConfigChange={onWayfernChange}
+            readOnly={isDisabled || isSaving}
+          />
+          <LanguageSelector
             config={wayfernConfig}
             onConfigChange={onWayfernChange}
             readOnly={isDisabled || isSaving}

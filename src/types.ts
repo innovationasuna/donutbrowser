@@ -503,6 +503,8 @@ export interface WayfernConfig {
   screen_min_height?: number;
   geoip?: string | boolean; // For compatibility with shared config form
   timezone_override?: string | null; // Per-profile IANA timezone; null follows location settings
+  language_override?: string | null; // Primary web locale; the browser derives its language ladder
+  language_auto_pending?: boolean; // Explicit switch to auto awaits the launch route
   timezone_auto_pending?: boolean; // Internal: explicit switch back to automatic timezone awaits the launch route
   block_images?: boolean; // For compatibility with shared config form
   block_webrtc?: boolean; // Legacy on/off switch; webrtc_mode wins when set

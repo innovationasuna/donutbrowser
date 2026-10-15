@@ -1393,7 +1393,15 @@
     "timezoneModeManual": "Chọn thủ công",
     "timezoneSearch": "Tìm múi giờ…",
     "timezoneNoResults": "Không có múi giờ phù hợp.",
-    "timezoneChoiceDescription": "Lựa chọn thủ công chỉ thay đổi múi giờ của hồ sơ này. Giờ mùa hè được tính tự động. Ngôn ngữ và vị trí giữ cài đặt hiện tại. Thay đổi có hiệu lực ở lần khởi chạy tiếp theo."
+    "timezoneChoiceDescription": "Lựa chọn thủ công chỉ thay đổi múi giờ của hồ sơ này. Giờ mùa hè được tính tự động. Ngôn ngữ và vị trí giữ cài đặt hiện tại. Thay đổi có hiệu lực ở lần khởi chạy tiếp theo.",
+    "languageModeLabel": "Chọn ngôn ngữ web",
+    "languageModeAuto": "Theo cài đặt vị trí",
+    "languageModeManual": "Chọn thủ công",
+    "languageSearch": "Tìm ngôn ngữ…",
+    "languageNoResults": "Không có ngôn ngữ phù hợp",
+    "languageChoiceDescription": "Trang web nhận {{languages}}. Menu trình duyệt và giao diện Donut có ngôn ngữ riêng. Áp dụng vào lần khởi chạy tiếp theo.",
+    "languageAutoDescription": "Giữ cách xử lý vị trí hiện tại. Bật vị trí tự động trước khi chuyển lại chế độ tự động.",
+    "languageLocale": "Ngôn ngữ web ưu tiên"
   },
   "warnings": {
     "windowResizeTitle": "Kích thước cửa sổ tùy chỉnh",
@@ -2433,7 +2441,8 @@
     "feedbackRateLimited": "Bạn đã gửi nhiều phản hồi trong thời gian ngắn. Hãy thử lại sau vài phút.",
     "feedbackSendFailed": "Không thể gửi phản hồi. Hãy thử lại sau.",
     "feedbackLogsUnreadable": "Không thể đọc nhật ký. Hãy tắt \"Đính kèm nhật ký gần đây\" rồi gửi lại.",
-    "timezoneOverrideInvalid": "{{timezone}} không phải múi giờ IANA được hỗ trợ."
+    "timezoneOverrideInvalid": "{{timezone}} không phải múi giờ IANA được hỗ trợ.",
+    "languageOverrideInvalid": "Ngôn ngữ web không được hỗ trợ: {{language}}."
   },
   "rail": {
     "profiles": "Profile",

@@ -211,6 +211,7 @@ impl ProfileManager {
 
     if let Some(config) = wayfern_config.as_mut() {
       config.normalize_timezone_override()?;
+      config.normalize_language_override()?;
       config.launch_args = config.checked_launch_args().await?;
     }
 
@@ -428,7 +429,7 @@ impl ProfileManager {
         }
       }
 
-      crate::wayfern_manager::WayfernManager::apply_config_timezone_override(&mut config)?;
+      crate::wayfern_manager::WayfernManager::apply_config_location_overrides(&mut config)?;
 
       // Record which proxy/geoip the fingerprint's location data was computed
       // for. On launch this is compared against the profile's current routing
@@ -1583,6 +1584,7 @@ impl ProfileManager {
     mut config: WayfernConfig,
   ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     config.normalize_timezone_override()?;
+    config.normalize_language_override()?;
     config.launch_args = config.checked_launch_args().await?;
     // Find the profile by ID
     let profile_uuid = uuid::Uuid::parse_str(profile_id).map_err(
@@ -1634,6 +1636,7 @@ impl ProfileManager {
     // Authorize submitted hardware edits first. The independent clock setting
     // then updates only the existing location channel, including legacy data.
     crate::wayfern_manager::WayfernManager::prepare_timezone_edit(stored, &mut config)?;
+    crate::wayfern_manager::WayfernManager::prepare_language_edit(stored, &mut config)?;
 
     // Update the Wayfern configuration
     if profile

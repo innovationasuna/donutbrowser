@@ -1393,7 +1393,15 @@
     "timezoneModeManual": "Choose manually",
     "timezoneSearch": "Search timezones…",
     "timezoneNoResults": "No matching timezone.",
-    "timezoneChoiceDescription": "Manual selection changes only this profile’s timezone. Daylight saving time is calculated automatically. Language and location keep their existing settings. Changes apply on the next launch."
+    "timezoneChoiceDescription": "Manual selection changes only this profile’s timezone. Daylight saving time is calculated automatically. Language and location keep their existing settings. Changes apply on the next launch.",
+    "languageModeLabel": "Web language selection",
+    "languageModeAuto": "Follow location settings",
+    "languageModeManual": "Choose manually",
+    "languageSearch": "Search languages…",
+    "languageNoResults": "No matching languages",
+    "languageChoiceDescription": "Websites receive {{languages}}. Browser menus and Donut’s interface keep their own language. Changes apply on the next launch.",
+    "languageAutoDescription": "Keeps the existing location behavior. To return from manual to automatic, enable automatic location first.",
+    "languageLocale": "Primary web language"
   },
   "warnings": {
     "windowResizeTitle": "Custom Window Dimensions",
@@ -2433,7 +2441,8 @@
     "feedbackRateLimited": "You sent a lot of feedback in a short time. Try again in a few minutes.",
     "feedbackSendFailed": "The feedback could not be sent. Try again later.",
     "feedbackLogsUnreadable": "The logs could not be read. Turn off \"Include recent logs\" and send again.",
-    "timezoneOverrideInvalid": "{{timezone}} is not a supported IANA timezone."
+    "timezoneOverrideInvalid": "{{timezone}} is not a supported IANA timezone.",
+    "languageOverrideInvalid": "Unsupported web language: {{language}}."
   },
   "rail": {
     "profiles": "Profiles",

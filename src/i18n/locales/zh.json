@@ -1393,7 +1393,15 @@
     "timezoneModeManual": "手动指定",
     "timezoneSearch": "搜索时区…",
     "timezoneNoResults": "没有匹配的时区。",
-    "timezoneChoiceDescription": "手动选择仅修改此环境的时区，夏令时自动计算。语言和地理位置保留现有设置，修改后下次启动生效。"
+    "timezoneChoiceDescription": "手动选择仅修改此环境的时区，夏令时自动计算。语言和地理位置保留现有设置，修改后下次启动生效。",
+    "languageModeLabel": "网页语言选择",
+    "languageModeAuto": "跟随定位设置",
+    "languageModeManual": "手动指定",
+    "languageSearch": "搜索语言…",
+    "languageNoResults": "没有匹配的语言",
+    "languageChoiceDescription": "网站将读取到 {{languages}}。浏览器菜单和 Donut 界面语言独立设置；修改后下次启动生效。",
+    "languageAutoDescription": "沿用现有定位行为。从手动恢复自动前，请先启用自动位置信息。",
+    "languageLocale": "网页首选语言"
   },
   "warnings": {
     "windowResizeTitle": "自定义窗口尺寸",
@@ -2433,7 +2441,8 @@
     "feedbackRateLimited": "你在短时间内发送了大量反馈。请几分钟后再试。",
     "feedbackSendFailed": "无法发送反馈。请稍后再试。",
     "feedbackLogsUnreadable": "无法读取日志。请关闭“附上最近的日志”后重新发送。",
-    "timezoneOverrideInvalid": "{{timezone}} 不是受支持的 IANA 时区。"
+    "timezoneOverrideInvalid": "{{timezone}} 不是受支持的 IANA 时区。",
+    "languageOverrideInvalid": "不支持的网页语言：{{language}}。"
   },
   "rail": {
     "profiles": "配置文件",

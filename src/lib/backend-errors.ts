@@ -90,6 +90,7 @@ export type BackendErrorCode =
   | "PROXY_AND_VPN_MUTUALLY_EXCLUSIVE"
   | "FINGERPRINT_MATCH_FAILED"
   | "TIMEZONE_OVERRIDE_INVALID"
+  | "LANGUAGE_OVERRIDE_INVALID"
   | "INVALID_DNS_RULES_JSON"
   | "UNSUPPORTED_DNS_RULES_FORMAT"
   | "DNS_RULES_SAVE_FAILED"
@@ -524,6 +525,10 @@ export function translateBackendError(t: TFunction, err: unknown): string {
       return t("backendErrors.proxyAndVpnMutuallyExclusive");
     case "FINGERPRINT_MATCH_FAILED":
       return t("backendErrors.fingerprintMatchFailed");
+    case "LANGUAGE_OVERRIDE_INVALID":
+      return t("backendErrors.languageOverrideInvalid", {
+        language: parsed.params?.language ?? "",
+      });
     case "TIMEZONE_OVERRIDE_INVALID":
       return t("backendErrors.timezoneOverrideInvalid", {
         timezone: parsed.params?.timezone ?? "",

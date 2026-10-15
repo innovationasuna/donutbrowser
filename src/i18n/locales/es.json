@@ -1399,7 +1399,15 @@
     "timezoneModeManual": "Elegir manualmente",
     "timezoneSearch": "Buscar zonas horarias…",
     "timezoneNoResults": "No hay zonas horarias coincidentes.",
-    "timezoneChoiceDescription": "La selección manual solo cambia la zona horaria de este perfil. El horario de verano se calcula automáticamente. El idioma y la ubicación conservan sus ajustes. Los cambios se aplican en el próximo inicio."
+    "timezoneChoiceDescription": "La selección manual solo cambia la zona horaria de este perfil. El horario de verano se calcula automáticamente. El idioma y la ubicación conservan sus ajustes. Los cambios se aplican en el próximo inicio.",
+    "languageModeLabel": "Idioma web",
+    "languageModeAuto": "Seguir ajustes de ubicación",
+    "languageModeManual": "Elegir manualmente",
+    "languageSearch": "Buscar idiomas…",
+    "languageNoResults": "No hay idiomas coincidentes",
+    "languageChoiceDescription": "Los sitios reciben {{languages}}. Los menús del navegador y Donut mantienen su propio idioma. Se aplica al reiniciar el perfil.",
+    "languageAutoDescription": "Mantiene el comportamiento de ubicación. Activa la ubicación automática antes de volver al modo automático.",
+    "languageLocale": "Idioma web preferido"
   },
   "warnings": {
     "windowResizeTitle": "Dimensiones de ventana personalizadas",
@@ -2443,7 +2451,8 @@
     "feedbackRateLimited": "Enviaste muchos comentarios en poco tiempo. Inténtalo de nuevo en unos minutos.",
     "feedbackSendFailed": "No se pudieron enviar los comentarios. Inténtalo más tarde.",
     "feedbackLogsUnreadable": "No se pudieron leer los registros. Desactiva «Incluir registros recientes» y envía de nuevo.",
-    "timezoneOverrideInvalid": "{{timezone}} no es una zona horaria IANA compatible."
+    "timezoneOverrideInvalid": "{{timezone}} no es una zona horaria IANA compatible.",
+    "languageOverrideInvalid": "Idioma web no compatible: {{language}}."
   },
   "rail": {
     "profiles": "Perfiles",

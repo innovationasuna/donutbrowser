@@ -18,3 +18,11 @@ The new stored fields are `timezone_override` (IANA name or null) and internal `
 Backend regression tests cover validation, preserving device and location fields, clearing a manual selection, resolving automatic location, retaining pending state after errors, legacy payloads, old-profile compatibility, and preserving mismatch warnings. Native UI tests cover searching and saving a timezone while the hardware fingerprint editor remains locked. Actual browser validation is recorded separately with the local build.
 
 The upstream browser E2E suite requires a Wayfern test token; running this fork does not itself supply a paid plan or unlock other features.
+
+## Web language selection
+
+New and stopped existing profiles also offer **Web language selection → Choose manually**. Search a supported locale such as `en-US`. Its primary language and fallback are sent through Wayfern's existing launch identity location channel, so websites receive `en-US, en`. Browser menus and the Donut manager keep their own interface language.
+
+`language_override` stores the chosen primary locale; `language_auto_pending` tracks an explicit return to automatic location. Manual language survives device generation and matching location to a proxy. Returning to automatic clears the old manual language and requires automatic location to be enabled; the next launch resolves only the pending dimensions through the profile's normal route. Other profiles default to their existing behavior. The catalog is shared by the selector and backend validation in `src/lib/browser-language-options.json`.
+
+Language validation on Wayfern 152.0.7977.64: the existing profile returned `navigator.language = "en-US"`, `navigator.languages = ["en-US", "en"]`, `Intl.DateTimeFormat().resolvedOptions().locale = "en-US"`, and retained `America/Los_Angeles`. Format/lint, four language backend regressions, two targeted native UI cases, and proxy/VPN/sync integration tests passed. The complete unit run had 1362 passes and one existing sync network test failure (`an_unreachable_storage_host_survives_the_whole_way_to_the_message`): the reserved test host received a prematurely closed connection instead of the expected unreachable-host error. An isolated retry reproduced it; no sync or proxy code was changed for that failure. The full upstream browser suite still requires a Wayfern test token.

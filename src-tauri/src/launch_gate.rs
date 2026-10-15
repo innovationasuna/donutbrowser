@@ -154,11 +154,17 @@ fn reportable_unverified(profile: &BrowserProfile, dimensions: &[String]) -> Vec
     .wayfern_config
     .as_ref()
     .is_some_and(crate::wayfern_manager::WayfernManager::needs_automatic_timezone);
+  let language_pending = profile
+    .wayfern_config
+    .as_ref()
+    .is_some_and(crate::wayfern_manager::WayfernManager::needs_automatic_language);
   dimensions
     .iter()
-    // The normal launcher still has to resolve this clock or fail. Calling it
-    // unverified now leaves an obsolete toast after a successful resolution.
-    .filter(|dimension| !timezone_pending || dimension.as_str() != "timezone")
+    // The normal launcher must resolve pending location fields or fail.
+    .filter(|dimension| {
+      (!timezone_pending || dimension.as_str() != "timezone")
+        && (!language_pending || dimension.as_str() != "language")
+    })
     .cloned()
     .collect()
 }
